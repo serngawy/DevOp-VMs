@@ -1,0 +1,90 @@
+{
+	"id": "9e70b0e7-653f-fce4-5b0b-05836d8ba22e",
+	"name": "Snbi",
+	"description": "",
+	"order": [
+		"388af99e-39df-a4b8-1b45-f89e5f4f7450",
+		"90fc42d8-252c-fb44-31b4-c2f75d7da192",
+		"f1a548e3-7a92-6165-5e57-ee5954958b15"
+	],
+	"folders": [],
+	"timestamp": 1450890421474,
+	"owner": 0,
+	"remoteLink": "",
+	"public": false,
+	"requests": [
+		{
+			"id": "388af99e-39df-a4b8-1b45-f89e5f4f7450",
+			"headers": "Authorization: Basic YWRtaW46YWRtaW4=\nContent-Type: application/json\n",
+			"url": "http://192.168.2.19:8181/restconf/config/snbi:snbi-domain",
+			"preRequestScript": "",
+			"pathVariables": {},
+			"method": "PUT",
+			"data": [],
+			"dataMode": "raw",
+			"version": 2,
+			"tests": "tests[\"response code is 200\"] = responseCode.code === 200;\ntests[\"body contains authenticated\"] = responseBody.has(\"authenticated\");",
+			"currentHelper": "basicAuth",
+			"helperAttributes": {
+				"id": "basic",
+				"username": "admin",
+				"password": "admin",
+				"saveToRequest": true
+			},
+			"time": 1466291334132,
+			"name": "Add domain list",
+			"description": "post white list",
+			"collectionId": "9e70b0e7-653f-fce4-5b0b-05836d8ba22e",
+			"responses": [],
+			"rawModeData": "{\n    \"snbi-domain\": {\n        \"domain-name\": \"secure_domain\",\n        \"device-list\": [\n            {\n                \"list-name\": \"demo list\",\n                \"list-type\": \"white\",\n                \"active\": \"true\",\n                \"devices\": [\n                    {\n                        \"device-id\": \"UDI-FirstFE\"\n                    },\n                    {\n                        \"device-id\": \"UDI-dev1\"\n                    },\n                    {\n                        \"device-id\": \"UDI-dev2\"\n                    }\n                ]\n            }\n        ]\n    }\n}"
+		},
+		{
+			"id": "90fc42d8-252c-fb44-31b4-c2f75d7da192",
+			"headers": "Authorization: Basic YWRtaW46YWRtaW4=\nContent-Type: application/json\n",
+			"url": "http://192.168.2.19:8181/restconf/config/snbi:snbi-domain/",
+			"preRequestScript": "",
+			"pathVariables": {},
+			"method": "GET",
+			"data": [],
+			"dataMode": "params",
+			"version": 2,
+			"tests": "tests[\"response code is 200\"] = responseCode.code === 200;\ntests[\"body contains authenticated\"] = responseBody.has(\"authenticated\");",
+			"currentHelper": "basicAuth",
+			"helperAttributes": {
+				"id": "basic",
+				"username": "admin",
+				"password": "admin",
+				"saveToRequest": true
+			},
+			"time": 1466291357780,
+			"name": "Get domain list",
+			"description": "Get white list",
+			"collectionId": "9e70b0e7-653f-fce4-5b0b-05836d8ba22e",
+			"responses": []
+		},
+		{
+			"id": "f1a548e3-7a92-6165-5e57-ee5954958b15",
+			"headers": "Authorization: Basic YWRtaW46YWRtaW4=\n",
+			"url": "http://192.168.2.19.:8181/restconf/config/snbi:snbi-domain/",
+			"preRequestScript": "",
+			"pathVariables": {},
+			"method": "DELETE",
+			"data": [],
+			"dataMode": "params",
+			"version": 2,
+			"tests": "tests[\"response code is 200\"] = responseCode.code === 200;\ntests[\"body contains authenticated\"] = responseBody.has(\"authenticated\");",
+			"currentHelper": "basicAuth",
+			"helperAttributes": {
+				"id": "basic",
+				"username": "admin",
+				"password": "admin",
+				"saveToRequest": true
+			},
+			"time": 1466291374944,
+			"name": "Del domain list",
+			"description": "delete white list",
+			"collectionId": "9e70b0e7-653f-fce4-5b0b-05836d8ba22e",
+			"responses": []
+		}
+	]
+}

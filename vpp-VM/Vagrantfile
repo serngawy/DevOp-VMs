@@ -1,0 +1,70 @@
+# -*- mode: ODL -*-
+
+$init = <<SCRIPT
+  apt-get update
+  apt-get install -y autoconf automake gcc libtool libxml2 libxml2-dev m4 make cmake openssl libssl-dev pkg-config dbus dbus-*dev
+  apt-get install -y linux-headers-$(uname -r) libxslt1-dev libssh2-1-dev libcurl4-openssl-dev xsltproc wget git python-setuptools g++ docker.io
+  apt-get clean && apt-get purge
+SCRIPT
+
+$ram_hugepage = <<SCRIPT
+  sysctl -w vm.nr_hugepages=1024
+  HUGEPAGES=`sysctl -n  vm.nr_hugepages`
+  if [ $HUGEPAGES != 1024 ]; then
+    echo "ERROR: Unable to get 1024 hugepages, only got $HUGEPAGES.  Cannot finish."
+  exit
+  fi
+SCRIPT
+
+$install_vpp_honeycamb = <<SCRIPT
+  export UBUNTU="trusty"
+  export RELEASE=".stable.1609"
+  export VPP_VAGRANT_NICS=1
+  sudo rm /etc/apt/sources.list.d/99fd.io.list
+  echo "deb [trusted=yes] https://nexus.fd.io/content/repositories/fd.io$RELEASE.ubuntu.$UBUNTU.main/ ./" | sudo tee -a /etc/apt/sources.list.d/99fd.io.list
+  sudo apt-get update
+  sudo apt-get install -y vpp vpp-lib vpp-dpdk-dkms vpp-plugins vpp-nsh-plugin honeycomb
+SCRIPT
+
+$install_java = <<SCRIPT
+  sudo apt-get install software-properties-common -y
+  sudo add-apt-repository ppa:openjdk-r/ppa -y
+  sudo apt-get update
+  sudo apt-get install openjdk-8-jdk -y
+  sudo update-java-alternatives --set java-1.8.0-openjdk-amd64
+  export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64
+  export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:\$JAVA_HOME/bin
+SCRIPT
+
+$cleanup = <<SCRIPT
+  apt-get clean && apt-get purge
+  rm -rf /tmp/*
+SCRIPT
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "puppetlabs/ubuntu-14.04-64-nocm"
+
+  config.vm.provider "virtualbox" do |v|
+      v.customize ["modifyvm", :id, "--cpuexecutioncap", "50"]
+      v.customize ["modifyvm", :id, "--memory", "4024"]
+      #support for the SSE4.x instruction is required in some versions of VB.
+      v.customize ["setextradata", :id, "VBoxInternal/CPUM/SSE4.1", "1"]
+      v.customize ["setextradata", :id, "VBoxInternal/CPUM/SSE4.2", "1"]
+  end
+
+  ## Guest config change the network interface "en0" based on your PC configuration
+  config.vm.hostname = "VPP-vm"
+  config.vm.network :public_network, bridge: "en0: Wi-Fi (AirPort)"
+  config.vm.network "private_network", type: "dhcp"
+
+  ## Provisioning
+  config.vm.provision :shell, :inline => $ram_hugepage
+  config.vm.provision :shell, :inline => $init
+  config.vm.provision :shell, privileged: false, :inline => $install_java
+  config.vm.provision :shell, privileged: false, :inline => $install_vpp_honeycamb
+  config.vm.provision :shell, :inline => $cleanup
+
+  ## SSH config
+  config.ssh.forward_x11 = false
+
+end

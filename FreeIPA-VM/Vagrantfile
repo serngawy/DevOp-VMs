@@ -1,0 +1,22 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+$install_ipaserver = <<SCRIPT
+ sudo yum install -y freeipa-server bind bind-dyndb-ldap bind-chroot
+SCRIPT
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "bento/fedora-21"
+
+  config.vm.define :ipaserver do |ipaserver|
+    ipaserver.vm.provider "virtualbox" do |v|
+      v.customize ["modifyvm", :id, "--cpuexecutioncap", "50"]
+      v.customize ["modifyvm", :id, "--memory", "2048"]
+    end
+    ipaserver.vm.network :public_network, bridge: "en0: Ethernet"
+    ipaserver.vm.network :forwarded_port, guest: 80, host: 8080
+    ipaserver.vm.network :forwarded_port, guest: 443, host: 1443
+    ipaserver.vm.hostname = "FreeIPA-VM"
+    ipaserver.vm.provision :shell, :inline => $install_ipaserver
+  end
+end

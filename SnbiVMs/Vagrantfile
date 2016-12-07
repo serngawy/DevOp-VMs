@@ -1,0 +1,115 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+$init = <<SCRIPT
+apt-get update
+apt-get install -y autoconf automake gcc libtool libxml2 libxml2-dev m4 make cmake openssl libssl-dev pkg-config dbus dbus-*dev
+apt-get install -y linux-headers-$(uname -r) libxslt1-dev libssh2-1-dev libcurl4-openssl-dev xsltproc wget git python-setuptools g++ docker.io
+apt-get clean && apt-get purge
+SCRIPT
+
+$install_java = <<SCRIPT
+apt-get install software-properties-common -y
+add-apt-repository ppa:openjdk-r/ppa -y
+apt-get update
+apt-get install openjdk-8-jdk -y
+export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64
+export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:\$JAVA_HOME/bin
+SCRIPT
+
+$download_odl = <<SCRIPT
+wget https://nexus.opendaylight.org/content/groups/public/org/opendaylight/integration/distribution-karaf/0.4.2-Beryllium-SR2/distribution-karaf-0.4.2-Beryllium-SR2.tar.gz
+tar -xvzf distribution-karaf-0.4.2-Beryllium-SR2.tar.gz
+sudo docker pull snbi/beryllium:latest
+SCRIPT
+
+$download_snbi = <<SCRIPT
+sudo docker pull snbi/beryllium:latest
+SCRIPT
+
+$update_kernel = <<SCRIPT
+mkdir kernel_4.4.3
+cd kernel_4.4.3
+wget http://kernel.ubuntu.com/~kernel-ppa/mainline/v4.4.3-wily/linux-headers-4.4.3-040403_4.4.3-040403.201602251634_all.deb
+wget http://kernel.ubuntu.com/~kernel-ppa/mainline/v4.4.3-wily/linux-headers-4.4.3-040403-generic_4.4.3-040403.201602251634_amd64.deb
+wget http://kernel.ubuntu.com/~kernel-ppa/mainline/v4.4.3-wily/linux-image-4.4.3-040403-generic_4.4.3-040403.201602251634_amd64.deb
+sudo -s dpkg -i *.deb
+sudo -s update-grub
+SCRIPT
+
+$cleanup_reboot = <<SCRIPT
+  aptitude clean
+  rm -rf /tmp/*
+  sudo shutdown -r now
+SCRIPT
+
+Vagrant.configure("2") do |config|
+
+config.vm.define "snbiodl", autostart: true do |snbiodl|
+  snbiodl.vm.box = "ubuntu/trusty64"
+
+  snbiodl.vm.provider "virtualbox" do |v|
+      v.customize ["modifyvm", :id, "--cpuexecutioncap", "50"]
+      v.customize ["modifyvm", :id, "--memory", "2048"]
+  end
+
+  ## Guest config
+  snbiodl.vm.hostname = "snbiODL-vm"
+  snbiodl.vm.network :public_network, bridge: "en0: Ethernet"
+
+  ## Provisioning
+  snbiodl.vm.provision :shell, :inline => $init
+  snbiodl.vm.provision :shell, :inline => $install_java
+  snbiodl.vm.provision :shell, privileged: false, :inline => $download_odl
+  snbiodl.vm.provision :shell, :inline => $update_kernel
+  snbiodl.vm.provision :shell, :inline => $cleanup_reboot
+
+  ## SSH config
+  snbiodl.ssh.forward_x11 = false
+end
+
+config.vm.define "snbi01", autostart: true do |snbi01|
+  snbi01.vm.box = "ubuntu/trusty64"
+
+  snbi01.vm.provider "virtualbox" do |v|
+      v.customize ["modifyvm", :id, "--cpuexecutioncap", "50"]
+      v.customize ["modifyvm", :id, "--memory", "2048"]
+  end
+
+  ## Guest config
+  snbi01.vm.hostname = "snbi1-vm"
+  snbi01.vm.network :public_network, bridge: "en0: Ethernet"
+
+  ## Provisioning
+  snbi01.vm.provision :shell, :inline => $init
+  snbi01.vm.provision :shell, privileged: false, :inline => $download_snbi
+  snbi01.vm.provision :shell, :inline => $update_kernel
+  snbi01.vm.provision :shell, :inline => $cleanup_reboot
+
+  ## SSH config
+  snbi01.ssh.forward_x11 = false
+end
+
+config.vm.define "snbi02", autostart: true do |snbi02|
+  snbi02.vm.box = "ubuntu/trusty64"
+
+  snbi02.vm.provider "virtualbox" do |v|
+      v.customize ["modifyvm", :id, "--cpuexecutioncap", "50"]
+      v.customize ["modifyvm", :id, "--memory", "2048"]
+  end
+
+  ## Guest config
+  snbi02.vm.hostname = "snbi1-vm"
+  snbi02.vm.network :public_network, bridge: "en0: Ethernet"
+
+  ## Provisioning
+  snbi02.vm.provision :shell, :inline => $init
+  snbi02.vm.provision :shell, privileged: false, :inline => $download_snbi
+  snbi02.vm.provision :shell, :inline => $update_kernel
+  snbi02.vm.provision :shell, :inline => $cleanup_reboot
+
+  ## SSH config
+  snbi02.ssh.forward_x11 = false
+end
+
+end

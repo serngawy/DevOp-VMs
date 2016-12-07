@@ -1,0 +1,87 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+$init = <<SCRIPT
+  aptitude update
+  aptitude install -y build-essential fakeroot debhelper autoconf automake libssl-dev graphviz \
+  python-all python-qt4 python-twisted-conch libtool git tmux vim python-pip python-paramiko \
+  python-sphinx python-dev python-repoze.lru libxml2-dev libxslt1-dev zlib1g-dev python-zmq python-lxml
+  pip install alabaster ecdsa stevedore greenlet oslo.config eventlet WebOb Routes msgpack-python
+SCRIPT
+
+$ovs = <<SCRIPT
+  cd /root/
+  wget http://openvswitch.org/releases/openvswitch-2.3.2.tar.gz
+  tar -xf openvswitch-2.3.2.tar.gz
+  pushd openvswitch-2.3.2
+  DEB_BUILD_OPTIONS='parallel=8 nocheck' fakeroot debian/rules binary
+  popd
+  sudo dpkg -i openvswitch-common*.deb openvswitch-datapath-dkms*.deb python-openvswitch*.deb openvswitch-pki*.deb openvswitch-switch*.deb
+  rm -rf *openvswitch*
+SCRIPT
+
+$mininet = <<SCRIPT
+  git clone git://github.com/mininet/mininet
+  pushd mininet
+  git checkout -b 2.1.0p1 2.1.0p1
+  patch -p0 < /vagrant/mn-options.patch
+  ./util/install.sh -fn
+  popd
+SCRIPT
+
+$install_java = <<SCRIPT
+apt-get install software-properties-common -y
+add-apt-repository ppa:openjdk-r/ppa -y
+apt-get update
+apt-get install openjdk-8-jdk -y
+export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64
+export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:\$JAVA_HOME/bin
+SCRIPT
+
+$download_odl = <<SCRIPT
+wget https://nexus.opendaylight.org/content/groups/public/org/opendaylight/integration/distribution-karaf/0.4.2-Beryllium-SR2/distribution-karaf-0.4.2-Beryllium-SR2.tar.gz
+tar -xvzf distribution-karaf-0.4.2-Beryllium-SR2.tar.gz
+SCRIPT
+
+$install_ryu = <<SCRIPT
+git clone https://github.com/osrg/ryu.git
+cd ryu
+python ./setup.py install
+cd ../
+git clone https://github.com/fp7-netide/Engine.git -b FloodlightShim
+cd Engine
+mkdir /usr/local/lib/python2.7/dist-packages/ryu/netide
+cp libraries/netip/python/* /usr/local/lib/python2.7/dist-packages/ryu/netide/
+export PYTHONPATH=/usr/local/lib/python2.7/dist-packages/ryu
+SCRIPT
+
+$cleanup = <<SCRIPT
+  aptitude clean
+  rm -rf /tmp/*
+SCRIPT
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/trusty64"
+
+  config.vm.provider "virtualbox" do |v|
+      v.customize ["modifyvm", :id, "--cpuexecutioncap", "50"]
+      v.customize ["modifyvm", :id, "--memory", "4048"]
+  end
+
+  ## Guest config
+  config.vm.hostname = "netide-vm"
+  config.vm.network :public_network, bridge: "en0: Ethernet"
+
+  ## Provisioning
+  config.vm.provision :shell, :inline => $init
+  config.vm.provision :shell, :inline => $ovs
+  config.vm.provision :shell, :inline => $mininet
+  config.vm.provision :shell, :inline => $install_java
+  config.vm.provision :shell, :inline => $install_ryu
+  config.vm.provision :shell, privileged: false, :inline => $download_odl
+  config.vm.provision :shell, :inline => $cleanup
+
+  ## SSH config
+  config.ssh.forward_x11 = false
+
+end
