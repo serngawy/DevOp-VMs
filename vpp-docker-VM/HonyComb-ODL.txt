@@ -1,0 +1,57 @@
+# Get all available interfaces at the VPP instance
+curl -X GET -k -u admin:admin -H "Content-Type: application/json" -H "Cache-Control: no-cache" "https://localhost:8443/restconf/config/ietf-interfaces:interfaces/"
+
+# Add a Physical NIC to VPP instance
+curl -X PUT -k -H "Authorization: Basic YWRtaW46YWRtaW4=" -H "Content-Type: application/json" -H "Cache-Control: no-cache" -d '{
+            "interface": [
+            {
+                "name": "GigabitEthernet0/9/0",
+                "description": "for testing purposes",
+                "type": "iana-if-type:ethernetCsmacd",
+                "enabled": "true",
+                "v3po:ethernet": {
+                  "mtu": 9216
+                }
+            }
+        ]
+    
+}' "https://localhost:8443/restconf/config/ietf-interfaces:interfaces/interface/GigabitEthernet0%2F9%2F0"
+
+# Set IP for NIC
+curl -X PUT -k -u admin:admin -H "Content-Type: application/json" -H "Cache-Control: no-cache" -d '{
+            "address": [{
+                "ip" : "172.28.128.5",
+                "prefix-length" : "24"
+            }]
+}' "https://localhost:8443/restconf/config/ietf-interfaces:interfaces/interface/GigabitEthernet0%2F9%2F0/ipv4/address/172.28.128.5"
+
+#mount the VPP node to ODL
+curl -X POST -u admin:admin -H "Accept: application/xml" -H "Content-Type: application/xml" -H "Cache-Control: no-cache"-d '<module xmlns="urn:opendaylight:params:xml:ns:yang:controller:config">
+  <type xmlns:prefix="urn:opendaylight:params:xml:ns:yang:controller:md:sal:connector:netconf">prefix:sal-netconf-connector</type>
+  <name>VPPDocker</name>
+  <address xmlns="urn:opendaylight:params:xml:ns:yang:controller:md:sal:connector:netconf">{VPP-IPAddress}</address>
+  <port xmlns="urn:opendaylight:params:xml:ns:yang:controller:md:sal:connector:netconf">2831</port>
+  <username xmlns="urn:opendaylight:params:xml:ns:yang:controller:md:sal:connector:netconf">admin</username>
+  <password xmlns="urn:opendaylight:params:xml:ns:yang:controller:md:sal:connector:netconf">admin</password>
+  <tcp-only xmlns="urn:opendaylight:params:xml:ns:yang:controller:md:sal:connector:netconf">false</tcp-only>
+  <event-executor xmlns="urn:opendaylight:params:xml:ns:yang:controller:md:sal:connector:netconf">
+    <type xmlns:prefix="urn:opendaylight:params:xml:ns:yang:controller:netty">prefix:netty-event-executor</type>
+    <name>global-event-executor</name>
+  </event-executor>
+  <binding-registry xmlns="urn:opendaylight:params:xml:ns:yang:controller:md:sal:connector:netconf">
+    <type xmlns:prefix="urn:opendaylight:params:xml:ns:yang:controller:md:sal:binding">prefix:binding-broker-osgi-registry</type>
+    <name>binding-osgi-broker</name>
+  </binding-registry>
+  <dom-registry xmlns="urn:opendaylight:params:xml:ns:yang:controller:md:sal:connector:netconf">
+    <type xmlns:prefix="urn:opendaylight:params:xml:ns:yang:controller:md:sal:dom">prefix:dom-broker-osgi-registry</type>
+    <name>dom-broker</name>
+  </dom-registry>
+  <client-dispatcher xmlns="urn:opendaylight:params:xml:ns:yang:controller:md:sal:connector:netconf">
+    <type xmlns:prefix="urn:opendaylight:params:xml:ns:yang:controller:config:netconf">prefix:netconf-client-dispatcher</type>
+    <name>global-netconf-dispatcher</name>
+  </client-dispatcher>
+  <processing-executor xmlns="urn:opendaylight:params:xml:ns:yang:controller:md:sal:connector:netconf">
+    <type xmlns:prefix="urn:opendaylight:params:xml:ns:yang:controller:threadpool">prefix:threadpool</type>
+    <name>global-netconf-processing-executor</name>
+  </processing-executor>
+</module>' "http://localhost:8181/restconf/config/network-topology:network-topology/topology/topology-netconf/node/controller-config/yang-ext:mount/config:modules"
