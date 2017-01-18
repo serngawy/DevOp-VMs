@@ -26,7 +26,7 @@ password admin
 enable password admin
 !
 router bgp 64496
- bgp router-id 192.168.2.242
+ bgp router-id 0.0.0.0
  network 192.0.2.0/24
  neighbor 192.168.2.7 remote-as 64496
  neighbor 192.168.2.7 route-reflector-client
@@ -49,7 +49,7 @@ password admin
 enable password admin
 !
 router bgp 64497
- bgp router-id 192.168.2.243
+ bgp router-id 0.0.0.0
  network 192.0.5.0/24
  neighbor 192.168.2.7 remote-as 64497
 !
