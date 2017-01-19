@@ -1,5 +1,4 @@
-# -*- mode: ruby -*-
-# vi: set ft=ruby :
+# mininet-openflow
 
 $init = <<SCRIPT
   aptitude update
@@ -28,21 +27,6 @@ $mininet = <<SCRIPT
   popd
 SCRIPT
 
-$ryu = <<SCRIPT
-  aptitude install -y python-lxml python-pbr python-greenlet
-  pip install six==1.7.0 networkx ryu
-SCRIPT
-
-$quagga = <<SCRIPT
-  sudo apt-get install quagga
-  echo "net.ipv4.conf.all.forwarding=1" | sudo tee -a /etc/sysctl.conf 
-  echo "net.ipv4.conf.default.forwarding=1" | sudo tee -a /etc/sysctl.conf 
-  sed 's/#net.ipv6.conf.all.forwarding=1/net.ipv6.conf.all.forwarding=1/g' /etc/sysctl.conf | sudo tee /etc/sysctl.conf
-  echo "net.ipv6.conf.default.forwarding=1" | sudo tee -a /etc/sysctl.conf 
-  sudo sysctl -p 
-SCRIPT
-
-
 $cleanup = <<SCRIPT
   aptitude clean
   rm -rf /tmp/*
@@ -57,17 +41,14 @@ Vagrant.configure("2") do |config|
   end
 
   ## Guest config
-  config.vm.hostname = "ODL-lab1"
-  #config.vm.network :public_network, bridge: "en0: Wi-Fi (AirPort)"
-  config.vm.network :forwarded_port, guest:6633, host:6634 # forwarding of port
+  config.vm.hostname = "Vagrant-mininet"
+  config.vm.network "public_network", bridge: "en0: Ethernet"
+  # config.vm.network :forwarded_port, guest:6633, host:6634 # forwarding of port
 
   ## Provisioning
   config.vm.provision :shell, :inline => $init
   config.vm.provision :shell, privileged: false, :inline => $ovs
   config.vm.provision :shell, privileged: false, :inline => $mininet
-  # config.vm.provision :shell, privileged: false, :inline => $quagga
-  # config.vm.provision :shell, :inline => $ryu
-  # config.vm.provision :shell, privileged: false, :inline => $trema
   config.vm.provision :shell, :inline => $cleanup
 
   ## SSH config
