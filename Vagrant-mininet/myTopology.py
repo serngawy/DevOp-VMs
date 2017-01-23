@@ -13,7 +13,7 @@ from subprocess import call
 def myNetwork():
     net = Mininet( topo=None, build=False)
     info( '*** Adding controller\n' )
-    c1=net.addController(name='c1', controller=RemoteController, ip='192.168.2.6', protocol='tcp', port=6633)
+    c1=net.addController(name='c1', controller=RemoteController, ip='{ODL-IPAddress}', protocol='tcp', port=6633)
     info( '*** Add switches\n')
 
     s4 = net.addSwitch('s4', cls=OVSKernelSwitch)
@@ -24,16 +24,16 @@ def myNetwork():
     h2 = net.addHost('h2', cls=Host, ip='10.0.1.3', defaultRoute=None)
     h3 = net.addHost('h3', cls=Host, ip='10.0.2.3', defaultRoute=None)
     h4 = net.addHost('h4', cls=Host, ip='10.0.2.4', defaultRoute=None)
-    h5 = net.addHost('h5', cls=Host, ip='10.0.2.5', defaultRoute=None)
+    h5 = net.addHost('h5', cls=Host, ip='10.0.5.5', defaultRoute=None)
 
     info( '*** Add links\n')
     net.addLink(s3, s4)
-    net.addLink(s4, h5)
-
-    net.addLink(h1, s3)
-    net.addLink(h2, s3)
+    net.addLink(s3, h1)
+    net.addLink(s3, h2)
     net.addLink(s4, h3)
     net.addLink(s4, h4)
+    net.addLink(s4, h5)   
+
     info( '*** Starting network\n')
     net.build()
     info( '*** Starting controllers\n')
